@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Tâche - TodoTestingApp{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-plus"></i> Créer une Nouvelle Tâche</h3>
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_label(form.title, 'Titre', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.title, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le titre de la tâche'}}) }}
+                        {{ form_errors(form.title) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Description détaillée (optionnel)'}}) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.priority, 'Priorité', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.priority, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.priority) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.category, 'Catégorie', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.category, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.category) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.dueDate, 'Date limite', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.dueDate, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.dueDate) }}
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('task_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Créer la Tâche
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

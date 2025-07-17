@@ -1,0 +1,520 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ task.title }} - TodoTestingApp{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>
+                    <i class="fas fa-edit"></i> Modifier la Tâche
+                    {% if task.completed %}
+                        <span class="badge bg-success ms-2">
+                            <i class="fas fa-check-circle"></i> Terminée
+                        </span>
+                    {% else %}
+                        <span class="badge bg-warning ms-2">
+                            <i class="fas fa-clock"></i> En cours
+                        </span>
+                    {% endif %}
+                    {% if task.overdue and not task.completed %}
+                        <span class="badge bg-danger ms-1">
+                            <i class="fas fa-exclamation-triangle"></i> En retard
+                        </span>
+                    {% endif %}
+                </h3>
+                <div>
+                    <a href="{{ path('task_show', {id: task.id}) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye"></i> Voir
+                    </a>
+                    <a href="{{ path('task_index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Liste
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_label(form.title, 'Titre de la tâche', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.title, {'attr': {'class': 'form-control', 'placeholder': 'Entrez le titre de la tâche'}}) }}
+                        {{ form_errors(form.title) }}
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> Le titre doit contenir entre 3 et 100 caractères
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Description détaillée de la tâche (optionnel)'}}) }}
+                        {{ form_errors(form.description) }}
+                        <div class="form-text">
+                            <i class="fas fa-align-left"></i> Ajoutez des détails pour clarifier cette tâche
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.priority, 'Niveau de priorité', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.priority, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.priority) }}
+                                <div class="form-text">
+                                    <i class="fas fa-flag"></i> 
+                                    Priorité actuelle: 
+                                    {% set priority_class = {
+                                        'low': 'secondary',
+                                        'medium': 'primary',
+                                        'high': 'warning',
+                                        'urgent': 'danger'
+                                    } %}
+                                    <span class="badge bg-{{ priority_class[task.priority] }}">{{ task.priority|upper }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.category, 'Catégorie', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.category, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.category) }}
+                                <div class="form-text">
+                                    <i class="fas fa-folder"></i> 
+                                    {% if task.category %}
+                                        Catégorie actuelle: 
+                                        <span class="badge" style="background-color: {{ task.category.color }};">
+                                            {{ task.category.name }}
+                                        </span>
+                                    {% else %}
+                                        Aucune catégorie assignée
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.dueDate, 'Date et heure limite', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.dueDate, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.dueDate) }}
+                        <div class="form-text">
+                            <i class="fas fa-calendar-alt"></i> 
+                            {% if task.dueDate %}
+                                Date limite actuelle: <strong>{{ task.dueDate|date('d/m/Y à H:i') }}</strong>
+                                {% if task.overdue and not task.completed %}
+                                    <span class="text-danger">
+                                        <i class="fas fa-exclamation-triangle"></i> 
+                                        En retard de {{ task.daysUntilDue|abs }} jour(s)
+                                    </span>
+                                {% elseif not task.completed %}
+                                    {% if task.daysUntilDue == 0 %}
+                                        <span class="text-warning"><i class="fas fa-clock"></i> Échéance aujourd'hui</span>
+                                    {% elseif task.daysUntilDue > 0 %}
+                                        <span class="text-success"><i class="fas fa-check"></i> {{ task.daysUntilDue }} jour(s) restant(s)</span>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                Aucune date limite définie
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Aperçu en temps réel -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-eye"></i> Aperçu des Modifications</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 id="preview-title" class="mb-2">{{ task.title }}</h6>
+                                    <p id="preview-description" class="text-muted mb-2">{{ task.description ?: 'Aucune description' }}</p>
+                                    <div class="mb-2">
+                                        <span id="preview-priority" class="badge bg-{{ priority_class[task.priority] }}">
+                                            <i class="fas fa-flag"></i> {{ task.priority|upper }}
+                                        </span>
+                                        <span id="preview-category" class="badge bg-secondary ms-1">
+                                            <i class="fas fa-folder"></i>
+                                            {% if task.category %}
+                                                {{ task.category.name }}
+                                            {% else %}
+                                                Sans catégorie
+                                            {% endif %}
+                                        </span>
+                                        {% if task.dueDate %}
+                                            <span id="preview-due-date" class="badge bg-info ms-1">
+                                                <i class="fas fa-calendar"></i> {{ task.dueDate|date('d/m/Y') }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> Créée le {{ task.createdAt|date('d/m/Y à H:i') }}
+                                        {% if task.completedAt %}
+                                            - <i class="fas fa-check"></i> Terminée le {{ task.completedAt|date('d/m/Y à H:i') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparaison avant/après -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-history"></i> Avant (Version Actuelle)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="mb-1">{{ task.title }}</h6>
+                                    <p class="text-muted mb-2 small">{{ task.description ?: 'Aucune description' }}</p>
+                                    <div>
+                                        <span class="badge bg-{{ priority_class[task.priority] }}">{{ task.priority|upper }}</span>
+                                        {% if task.category %}
+                                            <span class="badge ms-1" style="background-color: {{ task.category.color }};">{{ task.category.name }}</span>
+                                        {% endif %}
+                                        {% if task.dueDate %}
+                                            <span class="badge bg-info ms-1">{{ task.dueDate|date('d/m') }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-arrow-right"></i> Après (Aperçu)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <h6 id="preview-title-2" class="mb-1">{{ task.title }}</h6>
+                                    <p id="preview-description-2" class="text-muted mb-2 small">{{ task.description ?: 'Aucune description' }}</p>
+                                    <div>
+                                        <span id="preview-priority-2" class="badge bg-{{ priority_class[task.priority] }}">{{ task.priority|upper }}</span>
+                                        <span id="preview-category-2" class="badge bg-secondary ms-1">
+                                            {% if task.category %}{{ task.category.name }}{% else %}Sans catégorie{% endif %}
+                                        </span>
+                                        <span id="preview-due-date-2" class="badge bg-info ms-1" {% if not task.dueDate %}style="display: none;"{% endif %}>
+                                            {% if task.dueDate %}{{ task.dueDate|date('d/m') }}{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="{{ path('task_show', {id: task.id}) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-eye"></i> Voir la Tâche
+                            </a>
+                            <a href="{{ path('task_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-list"></i> Toutes les Tâches
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Sauvegarder les Modifications
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar avec informations et actions -->
+    <div class="col-md-4">
+        <!-- Informations sur la tâche -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Informations de la Tâche</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Statut Actuel</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>État :</strong> 
+                            {% if task.completed %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> Terminée
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock"></i> En cours
+                                </span>
+                            {% endif %}
+                        </li>
+                        <li><strong>Priorité :</strong> 
+                            <span class="badge bg-{{ priority_class[task.priority] }}">
+                                <i class="fas fa-flag"></i> {{ task.priority|upper }}
+                            </span>
+                        </li>
+                        {% if task.category %}
+                            <li><strong>Catégorie :</strong> 
+                                <a href="{{ path('category_show', {id: task.category.id}) }}" class="text-decoration-none">
+                                    <span class="badge" style="background-color: {{ task.category.color }};">
+                                        <i class="fas fa-folder"></i> {{ task.category.name }}
+                                    </span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div class="mb-3">
+                    <h6>Chronologie</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Créée :</strong> {{ task.createdAt|date('d/m/Y à H:i') }}</li>
+                        {% if task.completedAt %}
+                            <li><strong>Terminée :</strong> {{ task.completedAt|date('d/m/Y à H:i') }}</li>
+                            <li><strong>Durée :</strong> 
+                                {% set duration = task.completedAt.diff(task.createdAt) %}
+                                {{ duration.days }} jour(s)
+                            </li>
+                        {% endif %}
+                        {% if task.dueDate %}
+                            <li><strong>Échéance :</strong> 
+                                <span class="badge bg-{{ task.overdue and not task.completed ? 'danger' : 'info' }}">
+                                    {{ task.dueDate|date('d/m/Y à H:i') }}
+                                </span>
+                            </li>
+                            {% if task.daysUntilDue is not null and not task.completed %}
+                                <li><strong>Temps restant :</strong> 
+                                    {% if task.daysUntilDue > 0 %}
+                                        <span class="text-success">{{ task.daysUntilDue }} jour(s)</span>
+                                    {% elseif task.daysUntilDue == 0 %}
+                                        <span class="text-warning">Aujourd'hui !</span>
+                                    {% else %}
+                                        <span class="text-danger">{{ task.daysUntilDue|abs }} jour(s) de retard</span>
+                                    {% endif %}
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    </ul>
+                </div>
+
+                {% if task.dueDate and not task.completed %}
+                    <div class="mb-3">
+                        <h6>Urgence</h6>
+                        {% set urgency_score = 0 %}
+                        {% if task.overdue %}
+                            {% set urgency_score = urgency_score + 40 %}
+                        {% endif %}
+                        {% if task.priority == 'urgent' %}
+                            {% set urgency_score = urgency_score + 30 %}
+                        {% elseif task.priority == 'high' %}
+                            {% set urgency_score = urgency_score + 20 %}
+                        {% elseif task.priority == 'medium' %}
+                            {% set urgency_score = urgency_score + 10 %}
+                        {% endif %}
+                        {% if task.daysUntilDue <= 1 %}
+                            {% set urgency_score = urgency_score + 20 %}
+                        {% elseif task.daysUntilDue <= 3 %}
+                            {% set urgency_score = urgency_score + 10 %}
+                        {% endif %}
+                        
+                        <div class="progress">
+                            {% if urgency_score >= 70 %}
+                                <div class="progress-bar bg-danger" style="width: {{ urgency_score }}%">
+                                    Critique ({{ urgency_score }}%)
+                                </div>
+                            {% elseif urgency_score >= 50 %}
+                                <div class="progress-bar bg-warning" style="width: {{ urgency_score }}%">
+                                    Élevée ({{ urgency_score }}%)
+                                </div>
+                            {% elseif urgency_score >= 30 %}
+                                <div class="progress-bar bg-info" style="width: {{ urgency_score }}%">
+                                    Modérée ({{ urgency_score }}%)
+                                </div>
+                            {% else %}
+                                <div class="progress-bar bg-success" style="width: {{ urgency_score|default(10) }}%">
+                                    Faible ({{ urgency_score }}%)
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Actions Rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if not task.completed %}
+                        <form method="post" action="{{ path('task_complete', {id: task.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ task.id) }}">
+                            <button class="btn btn-success w-100" type="submit">
+                                <i class="fas fa-check"></i> Marquer comme Terminée
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{{ path('task_reopen', {id: task.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('reopen' ~ task.id) }}">
+                            <button class="btn btn-warning w-100" type="submit">
+                                <i class="fas fa-undo"></i> Rouvrir la Tâche
+                            </button>
+                        </form>
+                    {% endif %}
+
+                    <a href="{{ path('task_show', {id: task.id}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye"></i> Voir les Détails Complets
+                    </a>
+
+                    <a href="{{ path('task_new') }}" class="btn btn-outline-success">
+                        <i class="fas fa-plus"></i> Créer une Nouvelle Tâche
+                    </a>
+
+                    {% if task.category %}
+                        <a href="{{ path('category_show', {id: task.category.id}) }}" class="btn btn-outline-info">
+                            <i class="fas fa-folder"></i> Voir la Catégorie
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Conseils d'optimisation -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb"></i> Conseils</h5>
+            </div>
+            <div class="card-body">
+                {% if task.overdue and not task.completed %}
+                    <div class="alert alert-danger p-2 mb-2">
+                        <small><strong>⚠️ Tâche en retard !</strong><br>
+                        Considérez augmenter la priorité ou repousser l'échéance.</small>
+                    </div>
+                {% endif %}
+                
+                {% if not task.category %}
+                    <div class="alert alert-info p-2 mb-2">
+                        <small><strong>💡 Astuce :</strong><br>
+                        Assignez une catégorie pour mieux organiser vos tâches.</small>
+                    </div>
+                {% endif %}
+                
+                {% if not task.dueDate %}
+                    <div class="alert alert-warning p-2 mb-2">
+                        <small><strong>⏰ Suggestion :</strong><br>
+                        Définissez une date limite pour améliorer votre planification.</small>
+                    </div>
+                {% endif %}
+                
+                {% if task.description|length < 10 %}
+                    <div class="alert alert-info p-2 mb-2">
+                        <small><strong>📝 Conseil :</strong><br>
+                        Une description détaillée facilite la réalisation de la tâche.</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Zone de danger -->
+        <div class="card mt-3 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Suppression</h6>
+            </div>
+            <div class="card-body">
+                <p class="card-text small">
+                    <strong>Attention :</strong> La suppression de cette tâche est définitive et irréversible.
+                </p>
+                <form method="post" action="{{ path('task_delete', {id: task.id}) }}" 
+                      onsubmit="return confirm('⚠️ CONFIRMATION REQUISE ⚠️\n\nÊtes-vous absolument sûr de vouloir supprimer la tâche :\n&quot;{{ task.title }}&quot;\n\n❌ Cette action est DÉFINITIVE\n❌ Aucune récupération possible\n\nTapez &quot;SUPPRIMER&quot; pour confirmer')" 
+                      class="d-grid">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ task.id) }}">
+                    <button class="btn btn-danger btn-sm" type="submit">
+                        <i class="fas fa-trash"></i> Supprimer Définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mise à jour de l'aperçu en temps réel
+document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.querySelector('#task_title');
+    const descriptionInput = document.querySelector('#task_description');
+    const prioritySelect = document.querySelector('#task_priority');
+    const categorySelect = document.querySelector('#task_category');
+    const dueDateInput = document.querySelector('#task_dueDate');
+    
+    // Éléments d'aperçu
+    const previewTitle = document.getElementById('preview-title');
+    const previewTitle2 = document.getElementById('preview-title-2');
+    const previewDescription = document.getElementById('preview-description');
+    const previewDescription2 = document.getElementById('preview-description-2');
+    const previewPriority = document.getElementById('preview-priority');
+    const previewPriority2 = document.getElementById('preview-priority-2');
+    const previewCategory = document.getElementById('preview-category');
+    const previewCategory2 = document.getElementById('preview-category-2');
+    const previewDueDate = document.getElementById('preview-due-date');
+    const previewDueDate2 = document.getElementById('preview-due-date-2');
+    
+    const priorityClasses = {
+        'low': 'bg-secondary',
+        'medium': 'bg-primary', 
+        'high': 'bg-warning',
+        'urgent': 'bg-danger'
+    };
+    
+    function updatePreview() {
+        // Titre
+        const title = titleInput.value.trim() || '{{ task.title }}';
+        previewTitle.textContent = title;
+        previewTitle2.textContent = title;
+        
+        // Description
+        const description = descriptionInput.value.trim() || 'Aucune description';
+        previewDescription.textContent = description;
+        previewDescription2.textContent = description;
+        
+        // Priorité
+        const priority = prioritySelect.value;
+        const priorityClass = priorityClasses[priority] || 'bg-primary';
+        previewPriority.className = 'badge ' + priorityClass;
+        previewPriority2.className = 'badge ' + priorityClass;
+        previewPriority.innerHTML = '<i class="fas fa-flag"></i> ' + priority.toUpperCase();
+        previewPriority2.textContent = priority.toUpperCase();
+        
+        // Catégorie
+        const categoryOption = categorySelect.options[categorySelect.selectedIndex];
+        const categoryText = categoryOption.text || 'Sans catégorie';
+        previewCategory.innerHTML = '<i class="fas fa-folder"></i> ' + categoryText;
+        previewCategory2.textContent = categoryText;
+        
+        // Date limite
+        const dueDate = dueDateInput.value;
+        if (dueDate) {
+            const date = new Date(dueDate);
+            const formattedDate = date.toLocaleDateString('fr-FR');
+            previewDueDate.innerHTML = '<i class="fas fa-calendar"></i> ' + formattedDate;
+            previewDueDate2.textContent = formattedDate;
+            previewDueDate.style.display = 'inline';
+            previewDueDate2.style.display = 'inline';
+        } else {
+            previewDueDate.style.display = 'none';
+            previewDueDate2.style.display = 'none';
+        }
+    }
+    
+    // Écouter les changements
+    titleInput.addEventListener('input', updatePreview);
+    descriptionInput.addEventListener('input', updatePreview);
+    prioritySelect.addEventListener('change', updatePreview);
+    categorySelect.addEventListener('change', updatePreview);
+    dueDateInput.addEventListener('change', updatePreview);
+    
+    // Initialiser l'aperçu
+    updatePreview();
+    
+    // Animation sur changement de priorité
+    prioritySelect.addEventListener('change', function() {
+        previewPriority.style.transition = 'all 0.3s ease';
+        previewPriority2.style.transition = 'all 0.3s ease';
+    });
+});
+</script>
+{% endblock %}

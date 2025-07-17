@@ -1,0 +1,227 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Tâches - TodoTestingApp{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-tasks"></i> Mes Tâches</h1>
+            <a href="{{ path('task_new') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nouvelle Tâche
+            </a>
+        </div>
+
+        <!-- Filtres -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="btn-group" role="group">
+                    <a href="{{ path('task_index') }}" 
+                       class="btn btn-outline-primary {{ filter == 'all' ? 'active' : '' }}">
+                        <i class="fas fa-list"></i> Toutes ({{ stats.total }})
+                    </a>
+                    <a href="{{ path('task_index', {filter: 'pending'}) }}" 
+                       class="btn btn-outline-warning {{ filter == 'pending' ? 'active' : '' }}">
+                        <i class="fas fa-clock"></i> En cours ({{ stats.pending }})
+                    </a>
+                    <a href="{{ path('task_index', {filter: 'completed'}) }}" 
+                       class="btn btn-outline-success {{ filter == 'completed' ? 'active' : '' }}">
+                        <i class="fas fa-check"></i> Terminées ({{ stats.completed }})
+                    </a>
+                    <a href="{{ path('task_index', {filter: 'overdue'}) }}" 
+                       class="btn btn-outline-danger {{ filter == 'overdue' ? 'active' : '' }}">
+                        <i class="fas fa-exclamation-triangle"></i> En retard ({{ stats.overdue }})
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des tâches -->
+        {% if tasks is empty %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                    <h3 class="text-muted">Aucune tâche trouvée</h3>
+                    <p class="text-muted">Commencez par créer votre première tâche !</p>
+                    <a href="{{ path('task_new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Créer une tâche
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            {% for task in tasks %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title {{ task.completed ? 'text-decoration-line-through text-muted' : '' }}">
+                                    {% if task.completed %}
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    {% else %}
+                                        <i class="fas fa-circle text-warning"></i>
+                                    {% endif %}
+                                    {{ task.title }}
+                                    
+                                    <!-- Priority Badge -->
+                                    {% set priority_class = {
+                                        'low': 'secondary',
+                                        'medium': 'primary',
+                                        'high': 'warning',
+                                        'urgent': 'danger'
+                                    } %}
+                                    <span class="badge bg-{{ priority_class[task.priority] }} ms-2">
+                                        {{ task.priority|upper }}
+                                    </span>
+                                </h5>
+                                
+                                {% if task.description %}
+                                    <p class="card-text text-muted">{{ task.description|nl2br }}</p>
+                                {% endif %}
+                                
+                                {% if task.category %}
+                                    <span class="badge" style="background-color: {{ task.category.color }}">
+                                        <i class="fas fa-folder"></i> {{ task.category.name }}
+                                    </span>
+                                {% endif %}
+                                
+                                {% if task.dueDate %}
+                                    <span class="badge bg-{{ task.overdue ? 'danger' : 'info' }} ms-2">
+                                        <i class="fas fa-calendar"></i> 
+                                        {{ task.dueDate|date('d/m/Y') }}
+                                        {% if task.overdue %}(En retard){% endif %}
+                                    </span>
+                                {% endif %}
+                                
+                                <div class="text-muted mt-2">
+                                    <small>
+                                        <i class="fas fa-clock"></i> 
+                                        Créée le {{ task.createdAt|date('d/m/Y à H:i') }}
+                                        {% if task.completedAt %}
+                                            - Terminée le {{ task.completedAt|date('d/m/Y à H:i') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                        data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ path('task_show', {id: task.id}) }}">
+                                            <i class="fas fa-eye"></i> Voir
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ path('task_edit', {id: task.id}) }}">
+                                            <i class="fas fa-edit"></i> Modifier
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    {% if not task.completed %}
+                                        <li>
+                                            <form method="post" action="{{ path('task_complete', {id: task.id}) }}" class="d-inline">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ task.id) }}">
+                                                <button class="dropdown-item text-success" type="submit">
+                                                    <i class="fas fa-check"></i> Marquer terminée
+                                                </button>
+                                            </form>
+                                        </li>
+                                    {% else %}
+                                        <li>
+                                            <form method="post" action="{{ path('task_reopen', {id: task.id}) }}" class="d-inline">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('reopen' ~ task.id) }}">
+                                                <button class="dropdown-item text-warning" type="submit">
+                                                    <i class="fas fa-undo"></i> Rouvrir
+                                                </button>
+                                            </form>
+                                        </li>
+                                    {% endif %}
+                                    <li>
+                                        <form method="post" action="{{ path('task_delete', {id: task.id}) }}" 
+                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')" 
+                                              class="d-inline">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ task.id) }}">
+                                            <button class="dropdown-item text-danger" type="submit">
+                                                <i class="fas fa-trash"></i> Supprimer
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Sidebar avec statistiques -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie"></i> Statistiques</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <h3 class="text-primary">{{ stats.total }}</h3>
+                        <small class="text-muted">Total</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-success">{{ stats.completed }}</h3>
+                        <small class="text-muted">Terminées</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-warning">{{ stats.pending }}</h3>
+                        <small class="text-muted">En cours</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-danger">{{ stats.overdue }}</h3>
+                        <small class="text-muted">En retard</small>
+                    </div>
+                </div>
+
+                {% if stats.total > 0 %}
+                    <div class="mb-3">
+                        <div class="progress">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ stats.completion_rate }}%">
+                                {{ stats.completion_rate|round }}% terminé
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="d-grid gap-2">
+                    <a href="{{ path('task_statistics') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-chart-bar"></i> Voir plus de statistiques
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raccourcis -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Actions Rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('task_new') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> Nouvelle Tâche
+                    </a>
+                    <a href="{{ path('category_new') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-folder-plus"></i> Nouvelle Catégorie
+                    </a>
+                    <a href="{{ path('category_index') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-folder"></i> Gérer les Catégories
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

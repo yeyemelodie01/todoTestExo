@@ -1,0 +1,142 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Catégorie - TodoTestingApp{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-folder-plus"></i> Créer une Nouvelle Catégorie</h3>
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_label(form.name, 'Nom de la catégorie', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Ex: Travail, Personnel, Urgent...'}}) }}
+                        {{ form_errors(form.name) }}
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> Le nom doit être unique et contenir entre 2 et 100 caractères
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.color, 'Couleur', {'label_attr': {'class': 'form-label'}}) }}
+                        <div class="input-group">
+                            {{ form_widget(form.color, {'attr': {'class': 'form-control form-control-color', 'style': 'width: 80px;'}}) }}
+                            <div class="input-group-text">
+                                <span id="color-preview" class="d-inline-block rounded" style="width: 20px; height: 20px; background-color: #007bff;"></span>
+                            </div>
+                        </div>
+                        {{ form_errors(form.color) }}
+                        <div class="form-text">
+                            <i class="fas fa-palette"></i> Choisissez une couleur pour identifier facilement cette catégorie
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Description de la catégorie (optionnel)'}}) }}
+                        {{ form_errors(form.description) }}
+                        <div class="form-text">
+                            <i class="fas fa-align-left"></i> Ajoutez une description pour clarifier l'usage de cette catégorie
+                        </div>
+                    </div>
+
+                    <!-- Aperçu en temps réel -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-eye"></i> Aperçu</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div id="preview-badge" class="badge me-3" style="background-color: #007bff;">
+                                    <i class="fas fa-folder"></i> <span id="preview-name">Nouvelle catégorie</span>
+                                </div>
+                                <span id="preview-description" class="text-muted fst-italic">Description de la catégorie</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('category_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Créer la Catégorie
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        <!-- Conseils d'utilisation -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb"></i> Conseils d'Organisation</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success"></i> Bonnes Pratiques</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-chevron-right text-success"></i> Utilisez des noms courts et clairs</li>
+                            <li><i class="fas fa-chevron-right text-success"></i> Choisissez des couleurs contrastées</li>
+                            <li><i class="fas fa-chevron-right text-success"></i> Limitez-vous à 5-7 catégories max</li>
+                            <li><i class="fas fa-chevron-right text-success"></i> Pensez à votre workflow quotidien</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-star text-warning"></i> Exemples Populaires</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-primary">👔 Travail</span>
+                            <span class="badge bg-success">🏠 Personnel</span>
+                            <span class="badge bg-warning">🛒 Courses</span>
+                            <span class="badge bg-danger">🚨 Urgent</span>
+                            <span class="badge bg-info">📚 Formation</span>
+                            <span class="badge bg-secondary">🎯 Projets</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mise à jour de l'aperçu en temps réel
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.querySelector('#category_name');
+    const colorInput = document.querySelector('#category_color');
+    const descriptionInput = document.querySelector('#category_description');
+    
+    const previewName = document.getElementById('preview-name');
+    const previewBadge = document.getElementById('preview-badge');
+    const previewDescription = document.getElementById('preview-description');
+    const colorPreview = document.getElementById('color-preview');
+    
+    function updatePreview() {
+        // Nom
+        const name = nameInput.value.trim() || 'Nouvelle catégorie';
+        previewName.textContent = name;
+        
+        // Couleur
+        const color = colorInput.value;
+        previewBadge.style.backgroundColor = color;
+        colorPreview.style.backgroundColor = color;
+        
+        // Description
+        const description = descriptionInput.value.trim() || 'Description de la catégorie';
+        previewDescription.textContent = description;
+    }
+    
+    // Écouter les changements
+    nameInput.addEventListener('input', updatePreview);
+    colorInput.addEventListener('change', updatePreview);
+    descriptionInput.addEventListener('input', updatePreview);
+    
+    // Initialiser l'aperçu
+    updatePreview();
+});
+</script>
+{% endblock %}

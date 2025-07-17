@@ -1,0 +1,115 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ task.title }} - TodoTestingApp{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>
+                    {% if task.completed %}
+                        <i class="fas fa-check-circle text-success"></i>
+                    {% else %}
+                        <i class="fas fa-circle text-warning"></i>
+                    {% endif %}
+                    {{ task.title }}
+                </h3>
+                <div>
+                    <a href="{{ path('task_edit', {id: task.id}) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                    <a href="{{ path('task_index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if task.description %}
+                    <h5>Description</h5>
+                    <p class="text-muted">{{ task.description|nl2br }}</p>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Détails</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Statut:</strong> 
+                                {% if task.completed %}
+                                    <span class="badge bg-success">Terminée</span>
+                                {% else %}
+                                    <span class="badge bg-warning">En cours</span>
+                                {% endif %}
+                            </li>
+                            <li><strong>Priorité:</strong> 
+                                {% set priority_class = {
+                                    'low': 'secondary',
+                                    'medium': 'primary',
+                                    'high': 'warning',
+                                    'urgent': 'danger'
+                                } %}
+                                <span class="badge bg-{{ priority_class[task.priority] }}">
+                                    {{ task.priority|upper }}
+                                </span>
+                            </li>
+                            {% if task.category %}
+                                <li><strong>Catégorie:</strong> 
+                                    <span class="badge" style="background-color: {{ task.category.color }}">
+                                        {{ task.category.name }}
+                                    </span>
+                                </li>
+                            {% endif %}
+                            {% if task.dueDate %}
+                                <li><strong>Date limite:</strong> 
+                                    <span class="badge bg-{{ task.overdue ? 'danger' : 'info' }}">
+                                        {{ task.dueDate|date('d/m/Y à H:i') }}
+                                        {% if task.overdue %} (En retard){% endif %}
+                                    </span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Historique</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Créée:</strong> {{ task.createdAt|date('d/m/Y à H:i') }}</li>
+                            {% if task.completedAt %}
+                                <li><strong>Terminée:</strong> {{ task.completedAt|date('d/m/Y à H:i') }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex gap-2">
+                    {% if not task.completed %}
+                        <form method="post" action="{{ path('task_complete', {id: task.id}) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ task.id) }}">
+                            <button class="btn btn-success" type="submit">
+                                <i class="fas fa-check"></i> Marquer terminée
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{{ path('task_reopen', {id: task.id}) }}" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('reopen' ~ task.id) }}">
+                            <button class="btn btn-warning" type="submit">
+                                <i class="fas fa-undo"></i> Rouvrir
+                            </button>
+                        </form>
+                    {% endif %}
+                    
+                    <form method="post" action="{{ path('task_delete', {id: task.id}) }}" 
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')" 
+                          class="d-inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ task.id) }}">
+                        <button class="btn btn-danger" type="submit">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

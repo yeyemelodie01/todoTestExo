@@ -1,0 +1,41 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        public: true          # Makes services public by default. Set to false if you want to hide them.
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+      # Event Listeners
+    App\EventListener\TaskCompletedListener:
+        tags:
+            - { name: kernel.event_listener, event: task.completed, method: onTaskCompleted }
+
+    # Services explicites si nécessaire
+    App\Service\TaskService:
+        arguments:
+            $taskRepository: '@App\Repository\TaskRepository'
+            $entityManager: '@doctrine.orm.entity_manager'
+            $validator: '@validator'
+            $eventDispatcher: '@event_dispatcher'
+
+    App\Service\NotificationService:
+        arguments:
+            $mailer: '@mailer'
+            $logger: '@logger'

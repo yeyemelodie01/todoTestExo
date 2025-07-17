@@ -1,0 +1,385 @@
+# Template category/edit.html.twig Refait
+
+## 📄 **templates/category/edit.html.twig**
+
+```twig
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier {{ category.name }} - TodoTestingApp{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center" 
+                 style="background-color: {{ category.color }}20; border-left: 4px solid {{ category.color }};">
+                <h3 style="color: {{ category.color }};">
+                    <i class="fas fa-edit"></i> Modifier la Catégorie
+                    <span class="badge ms-2" style="background-color: {{ category.color }};">{{ category.name }}</span>
+                </h3>
+                <div>
+                    <a href="{{ path('category_show', {id: category.id}) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye"></i> Voir
+                    </a>
+                    <a href="{{ path('category_index') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+                    <div class="mb-3">
+                        {{ form_label(form.name, 'Nom de la catégorie', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Ex: Travail, Personnel, Urgent...'}}) }}
+                        {{ form_errors(form.name) }}
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> Le nom doit être unique et contenir entre 2 et 100 caractères
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.color, 'Couleur', {'label_attr': {'class': 'form-label'}}) }}
+                        <div class="input-group">
+                            {{ form_widget(form.color, {'attr': {'class': 'form-control form-control-color', 'style': 'width: 80px;'}}) }}
+                            <div class="input-group-text">
+                                <span id="color-preview" class="d-inline-block rounded" style="width: 20px; height: 20px; background-color: {{ category.color }};"></span>
+                            </div>
+                            <div class="input-group-text">
+                                <small class="text-muted">{{ category.color }}</small>
+                            </div>
+                        </div>
+                        {{ form_errors(form.color) }}
+                        <div class="form-text">
+                            <i class="fas fa-palette"></i> Cette couleur sera utilisée pour identifier la catégorie dans l'interface
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Description de la catégorie (optionnel)'}}) }}
+                        {{ form_errors(form.description) }}
+                        <div class="form-text">
+                            <i class="fas fa-align-left"></i> Décrivez l'usage de cette catégorie pour faciliter l'organisation
+                        </div>
+                    </div>
+
+                    <!-- Aperçu des modifications -->
+                    <div class="card bg-light mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-eye"></i> Aperçu des Modifications</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div id="preview-badge" class="badge me-3" style="background-color: {{ category.color }};">
+                                        <i class="fas fa-folder"></i> <span id="preview-name">{{ category.name }}</span>
+                                    </div>
+                                    <span id="preview-description" class="text-muted">{{ category.description ?: 'Aucune description' }}</span>
+                                </div>
+                                <div class="text-muted small">
+                                    Code couleur: <span id="preview-color-code">{{ category.color }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparaison avant/après -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-history"></i> Avant (Actuel)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge me-2" style="background-color: {{ category.color }};">
+                                            <i class="fas fa-folder"></i> {{ category.name }}
+                                        </span>
+                                        <small class="text-muted">{{ category.description ?: 'Sans description' }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-arrow-right"></i> Après (Aperçu)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <span id="preview-badge-2" class="badge me-2" style="background-color: {{ category.color }};">
+                                            <i class="fas fa-folder"></i> <span id="preview-name-2">{{ category.name }}</span>
+                                        </span>
+                                        <small id="preview-description-2" class="text-muted">{{ category.description ?: 'Sans description' }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="{{ path('category_show', {id: category.id}) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-eye"></i> Voir la Catégorie
+                            </a>
+                            <a href="{{ path('category_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Liste des Catégories
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Sauvegarder les Modifications
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        <!-- Informations sur la catégorie -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Informations sur cette Catégorie</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Statistiques</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Créée le :</strong> {{ category.createdAt|date('d/m/Y à H:i') }}</li>
+                            <li><strong>Nombre de tâches :</strong> 
+                                <span class="badge bg-primary">{{ category.tasks|length }}</span>
+                            </li>
+                            {% if category.tasks|length > 0 %}
+                                <li><strong>Tâches terminées :</strong> 
+                                    <span class="badge bg-success">{{ category.completedTaskCount }}</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Performance</h6>
+                        {% if category.tasks|length > 0 %}
+                            <div class="mb-2">
+                                <small class="text-muted">Taux de complétion</small>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: {{ category.completionRate }}%">
+                                        {{ category.completionRate|round }}%
+                                    </div>
+                                </div>
+                            </div>
+                            <ul class="list-unstyled">
+                                <li><strong>Efficacité :</strong> 
+                                    {% if category.completionRate >= 80 %}
+                                        <span class="badge bg-success">Excellente</span>
+                                    {% elseif category.completionRate >= 60 %}
+                                        <span class="badge bg-warning">Bonne</span>
+                                    {% elseif category.completionRate >= 40 %}
+                                        <span class="badge bg-orange">Moyenne</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">À améliorer</span>
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        {% else %}
+                            <p class="text-muted fst-italic">Aucune tâche pour calculer les performances</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Actions Rapides</h6>
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('task_new') }}?category={{ category.id }}" class="btn btn-success btn-sm">
+                                <i class="fas fa-plus"></i> Nouvelle Tâche
+                            </a>
+                            {% if category.tasks|length > 0 %}
+                                <a href="{{ path('task_index', {filter: 'category', category: category.id}) }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-list"></i> Voir les Tâches
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestion des tâches associées -->
+        {% if category.tasks|length > 0 %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-tasks"></i> Tâches Associées ({{ category.tasks|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for task in category.tasks|slice(0, 6) %}
+                            <div class="col-md-6 mb-2">
+                                <div class="card card-body py-2 {{ task.completed ? 'border-success' : 'border-warning' }}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0 {{ task.completed ? 'text-decoration-line-through text-muted' : '' }}">
+                                                {% if task.completed %}
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                {% else %}
+                                                    <i class="fas fa-circle text-warning"></i>
+                                                {% endif %}
+                                                {{ task.title|slice(0, 30) }}{% if task.title|length > 30 %}...{% endif %}
+                                            </h6>
+                                            <small class="text-muted">
+                                                {% set priority_class = {
+                                                    'low': 'secondary',
+                                                    'medium': 'primary',
+                                                    'high': 'warning',
+                                                    'urgent': 'danger'
+                                                } %}
+                                                <span class="badge bg-{{ priority_class[task.priority] }}">{{ task.priority|upper }}</span>
+                                                {{ task.createdAt|date('d/m') }}
+                                            </small>
+                                        </div>
+                                        <a href="{{ path('task_show', {id: task.id}) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if category.tasks|length > 6 %}
+                        <div class="text-center mt-3">
+                            <a href="{{ path('task_index', {filter: 'category', category: category.id}) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-plus"></i> Voir toutes les {{ category.tasks|length }} tâches
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Avertissements et actions dangereuses -->
+        {% if category.tasks|length > 0 %}
+            <div class="alert alert-warning mt-4">
+                <h6><i class="fas fa-exclamation-triangle"></i> Attention aux Modifications</h6>
+                <p class="mb-2">
+                    Cette catégorie contient <strong>{{ category.tasks|length }} tâche(s)</strong>. 
+                    Les modifications apportées affecteront l'affichage de toutes ces tâches.
+                </p>
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> 
+                    La suppression de cette catégorie retirera l'association avec les tâches mais ne les supprimera pas.
+                </small>
+            </div>
+        {% endif %}
+
+        <!-- Zone de danger -->
+        <div class="card mt-4 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Zone de Danger</h6>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    {% if category.tasks|length > 0 %}
+                        <strong>Supprimer cette catégorie :</strong> Les {{ category.tasks|length }} tâche(s) associée(s) 
+                        perdront leur catégorie mais ne seront pas supprimées.
+                    {% else %}
+                        <strong>Supprimer cette catégorie :</strong> Cette catégorie est vide et peut être supprimée 
+                        sans impact sur les tâches.
+                    {% endif %}
+                </p>
+                <form method="post" action="{{ path('category_delete', {id: category.id}) }}" 
+                      onsubmit="return confirm('⚠️ ATTENTION ⚠️\n\nÊtes-vous sûr de vouloir supprimer la catégorie &quot;{{ category.name }}&quot; ?\n\n{% if category.tasks|length > 0 %}❗ Impact: {{ category.tasks|length }} tâche(s) perdront leur catégorie\n{% endif %}✅ Les tâches ne seront pas supprimées\n\nTapez &quot;SUPPRIMER&quot; pour confirmer')" 
+                      class="d-inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ category.id) }}">
+                    <button class="btn btn-danger" type="submit">
+                        <i class="fas fa-trash"></i> Supprimer Définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Mise à jour de l'aperçu en temps réel
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.querySelector('#category_name');
+    const colorInput = document.querySelector('#category_color');
+    const descriptionInput = document.querySelector('#category_description');
+    
+    // Éléments d'aperçu
+    const previewName = document.getElementById('preview-name');
+    const previewName2 = document.getElementById('preview-name-2');
+    const previewBadge = document.getElementById('preview-badge');
+    const previewBadge2 = document.getElementById('preview-badge-2');
+    const previewDescription = document.getElementById('preview-description');
+    const previewDescription2 = document.getElementById('preview-description-2');
+    const colorPreview = document.getElementById('color-preview');
+    const colorCode = document.getElementById('preview-color-code');
+    
+    function updatePreview() {
+        // Nom
+        const name = nameInput.value.trim() || '{{ category.name }}';
+        previewName.textContent = name;
+        previewName2.textContent = name;
+        
+        // Couleur
+        const color = colorInput.value;
+        previewBadge.style.backgroundColor = color;
+        previewBadge2.style.backgroundColor = color;
+        colorPreview.style.backgroundColor = color;
+        colorCode.textContent = color;
+        
+        // Description
+        const description = descriptionInput.value.trim() || 'Sans description';
+        previewDescription.textContent = description;
+        previewDescription2.textContent = description;
+    }
+    
+    // Écouter les changements
+    nameInput.addEventListener('input', updatePreview);
+    colorInput.addEventListener('change', updatePreview);
+    descriptionInput.addEventListener('input', updatePreview);
+    
+    // Initialiser l'aperçu
+    updatePreview();
+    
+    // Animation sur changement de couleur
+    colorInput.addEventListener('change', function() {
+        previewBadge.style.transition = 'background-color 0.3s ease';
+        previewBadge2.style.transition = 'background-color 0.3s ease';
+        colorPreview.style.transition = 'background-color 0.3s ease';
+    });
+});
+</script>
+{% endblock %}
+```
+
+---
+
+## 🎯 **Améliorations Apportées**
+
+### ✅ **Interface Plus Riche**
+- **Comparaison avant/après** visuelle
+- **Statistiques détaillées** de la catégorie
+- **Performance indicator** (efficacité)
+- **Aperçu double** pour meilleure visualisation
+
+### ✅ **Informations Contextuelles**
+- **Nombre de tâches** associées
+- **Taux de complétion** avec barre de progression
+- **Actions rapides** intégrées
+- **Avertissements** pour les modifications
+
+### ✅ **Gestion des Tâches Associées**
+- **Aperçu des 6 premières** tâches
+- **Liens directs** vers les tâches
+- **Statut visuel** (terminé/en cours)
+- **Lien vers la liste complète**
+
+### ✅ **Zone de Danger Améliorée**
+- **Confirmation explicite** de suppression
+- **Impact clairement expliqué**
+- **Messages d'avertissement** détaillés
+
+### ✅ **JavaScript Interactif**
+- **Aperçu temps réel** sur 2 zones
+- **Animations** lors des changements
+- **Code couleur** mis à jour dynamiquement
+
+Cette version du template `edit.html.twig` est beaucoup plus complète et offre une meilleure expérience utilisateur ! 🚀

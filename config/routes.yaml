@@ -1,0 +1,17 @@
+controllers:
+    resource: ../src/Controller/
+    type: attribute
+
+
+app_task:
+    resource: App\Controller\TaskController
+    type: attribute
+
+app_category:
+    resource: App\Controller\CategoryController
+    type: attribute
+
+# Route racine
+app_index:
+    path: /
+    controller: App\Controller\TaskController::index

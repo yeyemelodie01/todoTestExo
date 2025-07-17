@@ -1,0 +1,179 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Catégories - TodoTestingApp{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-folder"></i> Gestion des Catégories</h1>
+            <a href="{{ path('category_new') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nouvelle Catégorie
+            </a>
+        </div>
+
+        {% if categories is empty %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h3 class="text-muted">Aucune catégorie trouvée</h3>
+                    <p class="text-muted">Organisez vos tâches en créant des catégories !</p>
+                    <a href="{{ path('category_new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Créer une catégorie
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="row">
+                {% for category in categories %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center" 
+                                 style="background-color: {{ category.color }}20; border-left: 4px solid {{ category.color }};">
+                                <h5 class="card-title mb-0" style="color: {{ category.color }};">
+                                    <i class="fas fa-folder"></i> {{ category.name }}
+                                </h5>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                            data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ path('category_show', {id: category.id}) }}">
+                                                <i class="fas fa-eye"></i> Voir
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ path('category_edit', {id: category.id}) }}">
+                                                <i class="fas fa-edit"></i> Modifier
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="post" action="{{ path('category_delete', {id: category.id}) }}" 
+                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?\\nToutes les tâches associées perdront leur catégorie.')" 
+                                                  class="d-inline">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ category.id) }}">
+                                                <button class="dropdown-item text-danger" type="submit">
+                                                    <i class="fas fa-trash"></i> Supprimer
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                {% if category.description %}
+                                    <p class="card-text text-muted">{{ category.description }}</p>
+                                {% else %}
+                                    <p class="card-text text-muted fst-italic">Aucune description</p>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div>
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-tasks"></i> 
+                                            {{ category.task_count ?? category.taskCount ?? 0 }} tâche(s)
+                                        </span>
+                                        {% if (category.task_count ?? category.taskCount ?? 0) > 0 %}
+                                            <span class="badge bg-success ms-1">
+                                                {{ ((category.completed_task_count ?? category.completedTaskCount ?? 0) / (category.task_count ?? category.taskCount ?? 1) * 100)|round }}% terminé
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <span class="badge" style="background-color: {{ category.color }};">
+                                            {{ category.color }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock"></i> 
+                                    Créée le {{ category.createdAt|date('d/m/Y') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Statistiques globales -->
+        {% if categories is not empty %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie"></i> Statistiques des Catégories</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h4 class="text-primary">{{ categories|length }}</h4>
+                            <small class="text-muted">Catégories totales</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-success">
+                                {% set total_tasks = 0 %}
+                                {% for category in categories %}
+                                    {% set total_tasks = total_tasks + (category.task_count ?? category.taskCount ?? 0) %}
+                                {% endfor %}
+                                {{ total_tasks }}
+                            </h4>
+                            <small class="text-muted">Tâches associées</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-warning">
+                                {% set categories_with_tasks = 0 %}
+                                {% for category in categories %}
+                                    {% if (category.task_count ?? category.taskCount ?? 0) > 0 %}
+                                        {% set categories_with_tasks = categories_with_tasks + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ categories_with_tasks }}
+                            </h4>
+                            <small class="text-muted">Catégories utilisées</small>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-info">
+                                {% if total_tasks > 0 %}
+                                    {{ ((categories_with_tasks / categories|length) * 100)|round }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </h4>
+                            <small class="text-muted">Taux d'utilisation</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Actions rapides -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Actions Rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ path('category_new') }}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Nouvelle Catégorie
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <a href="{{ path('task_index') }}" class="btn btn-primary">
+                                <i class="fas fa-tasks"></i> Voir toutes les Tâches
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
