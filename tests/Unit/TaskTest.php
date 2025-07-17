@@ -1,7 +1,6 @@
 <?php
 
 use App\Entity\Task;
-use App\Service\TaskService;
 use PHPUnit\Framework\TestCase;
 
 class TaskTest extends TestCase
@@ -10,8 +9,8 @@ class TaskTest extends TestCase
     public function testAddTask()
     {
         $task = new Task();
-        $task->setTitle('Test Task')
-             ->setDescription('This is a test task')
+        $task->setTitle('Tâche de Test')
+             ->setDescription('Une description de tâche pour les tests')
              ->setDueDate(new \DateTimeImmutable('2023-12-31'))
              ->setPriority('medium')
              ->setCreatedAt(new \DateTimeImmutable());
@@ -44,6 +43,8 @@ class TaskTest extends TestCase
     {
         $task = new Task();
         $task->setDescription('Ceci est une description test');
+
+        $this->assertEquals('Ceci est une description test', $task->getDescription());
     }
 
 }

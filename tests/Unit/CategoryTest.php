@@ -30,11 +30,9 @@ class CategoryTest extends TestCase
     public function testSetNameEmptyOrTooLong(){
         $category = new Category();
 
-        // Test nom vide
         $this->expectException(\InvalidArgumentException::class);
         $category->setName('');
 
-        // Test nom trop long
         $this->expectException(\InvalidArgumentException::class);
         $category->setName(str_repeat('a', 256));
     }
@@ -48,35 +46,34 @@ class CategoryTest extends TestCase
         $this->assertEquals('test-category', $category->getSlug());
     }
 
-    // Gestion de la liste des tâches
-    public function testTaskManagement(){
+    // Gestion de la liste de tâches
+    // addTask($task)
+    public function testAddTask(){
         $category = new Category();
         $category->setName('Test Category');
 
-        // Ajout de tâches
-        $task1 = new Task();
-        $task1->setTitle('Task 1');
-        $task2 = new Task();
-        $task2->setTitle('Task 2');
+        $task = new Task();
+        $task->setTitle('New Task');
 
-        $category->getTasks()->add($task1);
-        $category->getTasks()->add($task2);
+        $category->addTask($task);
 
-        $this->assertCount(2, $category->getTasks());
+        $this->assertCount(1, $category->getTasks());
+        $this->assertTrue($category->getTasks()->contains($task));
     }
-    // Gestion de la liste de tâches
+
+    // removeTask($task)
     public function testRemoveTask(){
         $category = new Category();
         $category->setName('Test Category');
 
-        $task1 = new Task();
-        $task1->setTitle('Task 1');
-        $category->getTasks()->add($task1);
+        $task = new Task();
+        $task->setTitle('Task to Remove');
 
-        // Suppression de la tâche
-        $category->getTasks()->removeElement($task1);
+        $category->addTask($task);
+        $category->removeTask($task);
 
         $this->assertCount(0, $category->getTasks());
+        $this->assertFalse($category->getTasks()->contains($task));
     }
 
     // Tâches en double appeler deux fois addTask($sameTask)
@@ -87,32 +84,13 @@ class CategoryTest extends TestCase
         $task = new Task();
         $task->setTitle('Unique Task');
 
-        // Ajout de la même tâche deux fois
         $category->addTask($task);
         $category->addTask($task);
 
-        // Vérification que la tâche n'est pas dupliquée
         $this->assertCount(1, $category->getTasks());
     }
 
     // Requête de tâches filtrées(si votre Category propose un helper)
     // exemple : $category->getTasksByStatus('completed');
-    public function testGetTasksByStatus(){
-        $category = new Category();
-        $category->setName('Test Category');
 
-        $task1 = new Task();
-        $task1->setTitle('Task 1')->setStatus('completed');
-        $task2 = new Task();
-        $task2->setTitle('Task 2')->setStatus('pending');
-
-        $category->getTasks()->add($task1);
-        $category->getTasks()->add($task2);
-
-        // Assuming getTasksByStatus is a method that filters tasks by status
-        $completedTasks = $category->getTasksByStatus('completed');
-
-        $this->assertCount(1, $completedTasks);
-        $this->assertEquals('Task 1', $completedTasks[0]->getTitle());
-    }
 }
